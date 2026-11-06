@@ -56,7 +56,8 @@ removing a borrowed book) · **422** invalid data, unknown reader or status.
 - **Reminders run as a daily sweep.** Solid Queue runs `LoanRemindersJob` at
   8am, and it emails readers with loans due in 3 days or today. A book
   returned early needs no cancelled job, and the mailer skips loans returned
-  before the email goes out.
+  before the email goes out. Failed deliveries (mail server down or busy) are
+  retried every 10 minutes for about an hour, while "due today" is still true.
 - **One time zone** (`LIBRARY_TIME_ZONE`, default Warsaw) drives both due
   dates and the 8am schedule.
 
@@ -73,13 +74,22 @@ removing a borrowed book) · **422** invalid data, unknown reader or status.
   409 from the unique index instead of a 422.
 - Compose is for local evaluation only: it uses a placeholder secret and a
   default database password.
+- `bin/rails loans:send_reminders` only works where jobs run in a separate
+  process (Docker). Run locally, the rake process exits before its queued
+  emails are sent.
+- A NUL byte inside an input value (e.g. `12\u000034`) reaches PostgreSQL and
+  returns a 500 instead of a 4xx.
 
 ## AI use
 
-I used Claude Code and to write code faster and to get a second set of eyes in
+I used Claude Code to write code faster and to get a second set of eyes in
 review. The design, the trade-offs in this README and the final say on every
 change were mine.
 
 I reviewed its output as I would a colleague's pull request: I questioned the
 approach, asked for proof in a spec and rejected suggestions that didn't
 hold up. Nothing went in without passing the test suite.
+
+A final review of the whole repository found four minor issues. I fixed two:
+CI now runs the specs, and failed reminder emails are retried. The other two
+are low-risk and listed under Limitations.
