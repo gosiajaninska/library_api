@@ -1,0 +1,61 @@
+# Shared by the web and jobs containers: same image, same database, same mail server.
+x-app-environment: &app-environment
+  LIBRARY_API_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-library_api}
+  PGHOST: db
+  RAILS_ENV: production
+  SECRET_KEY_BASE: ${SECRET_KEY_BASE:-local-compose-secret-key-base-not-for-production}
+  SMTP_ADDRESS: mailpit
+  SMTP_PORT: "1025"
+
+services:
+  app:
+    build: .
+    image: library_api
+    environment: *app-environment
+    ports:
+      - "3000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    # Healthy once db:prepare (bin/docker-entrypoint) has run and the server answers.
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost/up"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # Solid Queue: runs the daily LoanRemindersJob (config/recurring.yml) and
+  # delivers the emails it queues.
+  jobs:
+    image: library_api
+    command: ./bin/jobs
+    environment: *app-environment
+    depends_on:
+      app:
+        condition: service_healthy
+
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: library_api_production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-library_api}
+      POSTGRES_USER: library_api
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_api -d library_api_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Catches every email the app sends. Inbox: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.21.0
+    ports:
+      - "8025:8025"
+
+volumes:
+  postgres_data:
