@@ -10,10 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_103113) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_125948) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "books", force: :cascade do |t|
+    t.string "serial_number", null: false
+    t.string "title", null: false
+    t.string "author", null: false
+    t.datetime "discarded_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["discarded_at"], name: "index_books_on_discarded_at"
+    t.index ["serial_number"], name: "index_books_on_serial_number", unique: true
+    t.check_constraint "btrim(author::text) <> ''::text", name: "books_author_not_blank"
+    t.check_constraint "btrim(title::text) <> ''::text", name: "books_title_not_blank"
+    t.check_constraint "serial_number::text ~ '^[0-9]{6}$'::text", name: "books_serial_number_format"
+  end
 
   create_table "readers", force: :cascade do |t|
     t.string "card_number", null: false
