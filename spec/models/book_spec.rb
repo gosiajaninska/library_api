@@ -119,13 +119,57 @@ RSpec.describe Book, type: :model do
       end
 
       it "keeps the original timestamp when called again" do
-        travel_to(Time.zone.local(2026, 11, 1, 10, 0, 0)) { kept_book.discard! }
+        kept_book.discard!
         original = kept_book.reload.discarded_at
 
-        travel_to(Time.zone.local(2026, 11, 5, 10, 0, 0)) { kept_book.discard! }
+        travel(1.day) { kept_book.discard! }
 
         expect(kept_book.reload.discarded_at).to eq(original)
       end
+
+      it "raises and keeps the book when it is currently borrowed" do
+        create(:loan, book: kept_book)
+
+        expect { kept_book.discard! }.to raise_error(Book::BorrowedError)
+        expect(kept_book.reload).not_to be_discarded
+      end
+
+      it "discards a book that was borrowed and returned, keeping its history" do
+        loan = create(:loan, :returned, book: kept_book)
+
+        kept_book.discard!
+
+        expect(kept_book.reload).to be_discarded
+        expect(kept_book.loans).to contain_exactly(loan)
+      end
+    end
+  end
+
+  describe "#borrowed?" do
+    let(:persisted_book) { create(:book) }
+
+    it "is false without any loans" do
+      expect(persisted_book).not_to be_borrowed
+    end
+
+    it "is false when all loans have been returned" do
+      create(:loan, :returned, book: persisted_book)
+
+      expect(persisted_book).not_to be_borrowed
+    end
+
+    it "is true with an active loan" do
+      create(:loan, book: persisted_book)
+
+      expect(persisted_book).to be_borrowed
+    end
+  end
+
+  describe "#destroy" do
+    it "is not allowed when the book has loans (history must be kept)" do
+      loan = create(:loan, :returned)
+
+      expect { loan.book.destroy }.to raise_error(ActiveRecord::DeleteRestrictionError)
     end
   end
 

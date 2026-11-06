@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_125948) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_131500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -29,6 +29,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_125948) do
     t.check_constraint "serial_number::text ~ '^[0-9]{6}$'::text", name: "books_serial_number_format"
   end
 
+  create_table "loans", force: :cascade do |t|
+    t.bigint "book_id", null: false
+    t.bigint "reader_id", null: false
+    t.datetime "borrowed_at", null: false
+    t.date "due_on", null: false
+    t.datetime "returned_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["book_id"], name: "index_loans_on_book_id"
+    t.index ["book_id"], name: "index_loans_on_book_id_active", unique: true, where: "(returned_at IS NULL)"
+    t.index ["due_on"], name: "index_loans_on_due_on_active", where: "(returned_at IS NULL)"
+    t.index ["reader_id"], name: "index_loans_on_reader_id"
+    t.check_constraint "returned_at IS NULL OR returned_at >= borrowed_at", name: "loans_returned_after_borrowed"
+  end
+
   create_table "readers", force: :cascade do |t|
     t.string "card_number", null: false
     t.citext "email", null: false
@@ -41,4 +56,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_125948) do
     t.check_constraint "btrim(full_name::text) <> ''::text", name: "readers_full_name_not_blank"
     t.check_constraint "card_number::text ~ '^[0-9]{6}$'::text", name: "readers_card_number_format"
   end
+
+  add_foreign_key "loans", "books"
+  add_foreign_key "loans", "readers"
 end

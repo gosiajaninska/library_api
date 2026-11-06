@@ -33,7 +33,9 @@ module LibraryApi
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # Loan due dates and reminders are calendar days in the library's time zone.
+    # Timestamps are still stored in UTC.
+    config.time_zone = ENV.fetch("LIBRARY_TIME_ZONE", "Warsaw")
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Only loads a smaller set of middleware suitable for API only apps.

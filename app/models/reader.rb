@@ -1,7 +1,8 @@
 class Reader < ApplicationRecord
-  normalizes :card_number, with: ->(card_number) { card_number.strip }
+  has_many :loans, dependent: :restrict_with_exception
+
+  normalizes :card_number, :full_name, with: ->(value) { value.strip }
   normalizes :email, with: ->(email) { email.strip.downcase }
-  normalizes :full_name, with: ->(full_name) { full_name.strip }
 
   validates :card_number, presence: true,
                           uniqueness: true,

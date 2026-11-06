@@ -113,6 +113,14 @@ RSpec.describe Reader, type: :model do
     end
   end
 
+  describe "#destroy" do
+    it "is not allowed when the reader has loans (history must be kept)" do
+      loan = create(:loan)
+
+      expect { loan.reader.destroy }.to raise_error(ActiveRecord::DeleteRestrictionError)
+    end
+  end
+
   describe "database constraints" do
     context "unique indexes" do
       it "enforces card_number uniqueness" do

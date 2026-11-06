@@ -1,4 +1,13 @@
 class Book < ApplicationRecord
+  class BorrowedError < StandardError
+    def initialize(msg = "Book is currently borrowed and cannot be removed")
+      super
+    end
+  end
+
+  has_many :loans, dependent: :restrict_with_exception
+  has_one :active_loan, -> { active }, class_name: "Loan", inverse_of: :book
+
   normalizes :serial_number, :title, :author, with: ->(value) { value.strip }
 
   validates :serial_number, presence: true,
@@ -14,9 +23,16 @@ class Book < ApplicationRecord
     discarded_at.present?
   end
 
-  def discard!
-    return true if discarded?
+  def borrowed?
+    active_loan.present?
+  end
 
-    touch(:discarded_at)
+  def discard!
+    with_lock do
+      raise BorrowedError if loans.active.exists?
+
+      touch(:discarded_at) unless discarded?
+    end
+    true
   end
 end
