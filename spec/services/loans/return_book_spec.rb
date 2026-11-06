@@ -14,6 +14,15 @@ RSpec.describe Loans::ReturnBook do
     end
   end
 
+  it "leaves the book object showing it as available" do
+    create(:loan, book: book, borrowed_at: 1.hour.ago)
+    expect(book).to be_borrowed # caches the active loan
+
+    described_class.call(book: book)
+
+    expect(book).not_to be_borrowed
+  end
+
   it "does not touch earlier, already returned loans" do
     old_loan = create(:loan, :returned, book: book)
     create(:loan, book: book)

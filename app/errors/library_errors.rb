@@ -24,4 +24,18 @@ module LibraryErrors
       super
     end
   end
+
+  class InvalidRequest < StandardError; end
+
+  class ReaderNotFound < InvalidRequest
+    def initialize(message = "Reader not found")
+      super
+    end
+  end
+
+  class InvalidStatus < InvalidRequest
+    def initialize(message = "Status must be one of: #{Book::STATUSES.join(', ')}")
+      super
+    end
+  end
 end

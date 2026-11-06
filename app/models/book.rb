@@ -1,4 +1,6 @@
 class Book < ApplicationRecord
+  STATUSES = %w[borrowed available].freeze
+
   has_many :loans, dependent: :restrict_with_exception
   has_one :active_loan, -> { active }, class_name: "Loan", inverse_of: :book
 
@@ -19,6 +21,10 @@ class Book < ApplicationRecord
 
   def borrowed?
     active_loan.present?
+  end
+
+  def status
+    borrowed? ? "borrowed" : "available"
   end
 
   def discard!

@@ -14,6 +14,7 @@ module Loans
         raise LibraryErrors::NotBorrowed unless loan
 
         loan.update!(returned_at: Time.current)
+        book.reset_active_loan # the cache still holds the returned loan
         loan
       end
     end

@@ -14,7 +14,9 @@ module Loans
         raise LibraryErrors::BookDiscarded if book.discarded?
         raise LibraryErrors::AlreadyBorrowed if book.borrowed?
 
-        book.loans.create!(reader: reader, borrowed_at: Time.current)
+        loan = book.loans.create!(reader: reader, borrowed_at: Time.current)
+        book.reset_active_loan # borrowed? above cached nil
+        loan
       end
     end
 

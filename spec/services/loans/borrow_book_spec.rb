@@ -14,6 +14,13 @@ RSpec.describe Loans::BorrowBook do
     end
   end
 
+  it "leaves the book object showing the new loan" do
+    loan = described_class.call(book: book, reader: reader)
+
+    expect(book).to be_borrowed
+    expect(book.active_loan).to eq(loan)
+  end
+
   it "allows borrowing a book again after it was returned" do
     create(:loan, :returned, book: book)
 
