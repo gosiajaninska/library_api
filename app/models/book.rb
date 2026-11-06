@@ -1,10 +1,4 @@
 class Book < ApplicationRecord
-  class BorrowedError < StandardError
-    def initialize(msg = "Book is currently borrowed and cannot be removed")
-      super
-    end
-  end
-
   has_many :loans, dependent: :restrict_with_exception
   has_one :active_loan, -> { active }, class_name: "Loan", inverse_of: :book
 
@@ -29,7 +23,7 @@ class Book < ApplicationRecord
 
   def discard!
     with_lock do
-      raise BorrowedError if loans.active.exists?
+      raise LibraryErrors::BorrowedBookDiscard if borrowed?
 
       touch(:discarded_at) unless discarded?
     end

@@ -130,7 +130,7 @@ RSpec.describe Book, type: :model do
       it "raises and keeps the book when it is currently borrowed" do
         create(:loan, book: kept_book)
 
-        expect { kept_book.discard! }.to raise_error(Book::BorrowedError)
+        expect { kept_book.discard! }.to raise_error(LibraryErrors::BorrowedBookDiscard)
         expect(kept_book.reload).not_to be_discarded
       end
 
