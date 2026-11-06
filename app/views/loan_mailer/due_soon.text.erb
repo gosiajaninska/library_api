@@ -1,0 +1,8 @@
+Hello <%= @loan.reader.full_name %>,
+
+this is a reminder that the book you borrowed is due in <%= LoanRemindersJob::DAYS_BEFORE_DUE %> days.
+
+<%= render "loan_details", loan: @loan %>
+Please return it on time.
+
+Your Library

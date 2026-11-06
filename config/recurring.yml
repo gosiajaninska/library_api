@@ -10,6 +10,11 @@
 #     schedule: at 5am every day
 
 production:
+  loan_reminders:
+    class: LoanRemindersJob
+    # 8am in the library's time zone (LIBRARY_TIME_ZONE), the same zone the job
+    # uses for "today". Fugit needs the IANA name, e.g. Europe/Warsaw, not "Warsaw".
+    schedule: every day at 8am <%= ActiveSupport::TimeZone[Rails.configuration.time_zone].tzinfo.name %>
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
